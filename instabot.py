@@ -5,14 +5,28 @@ import requests
 
 # import termcolor
 from termcolor import colored
+
 # For Sentiment Analysis  we import the library TextBlob
 from textblob import TextBlob
+
 # to  implement Sentiment Analysis using the TextBlob library
 from textblob.sentiments import NaiveBayesAnalyzer
+
+# import json
+from wordcloud import WordCloud, STOPWORDS
+
+# import matplotlib
+import matplotlib.pyplot as plt
+
+# import clarifai
+from clarifai.rest import ClarifaiApp
 
 
 # Access Token
 APP_ACCESS_TOKEN = "1136457803.d18d4d0.190888b83160419fba78fda58aa88c7c"
+
+# Token Owner : ananyagupta.main
+# Sandbox users : ['princechauhan3133','ysyuvraj079','cmayankdogra', 'srishtichauhan1196', 'Pl.Instabot']
 
 #  Base URL common for all the Instagram API endpoints
 BASE_URL = "https://api.instagram.com/v1/"
@@ -284,7 +298,72 @@ def delete_negative_comment(insta_username):
         print "INVALID choice!!"
 
 
-def start_bot():
+ar = []
+my_dictionary = {
+    'imageurl': None,
+    'words': ''
+
+}
+user_lis = ['princechauhan3133', 'ysyuvraj079', 'srishtichauhan1196','Pl.Instabot']
+
+#function to show the subtrend of a wedding and plot through wordcloud
+#objective to show subtrend of any activities or event and plot through word cloud
+#defining clarifaiApp with generated key
+app = ClarifaiApp(api_key='b40b2d24a82b4cab89ec2ec4af04874a')
+
+# to get the general model
+model = app.models.get('weddings-v1.0')
+for user in user_lis:
+ def get_users_post(user):
+        user_id = get_user_id(user)
+        if user_id == None:
+            print 'User does not exist!'
+            exit()
+        request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
+        print 'GET request url : %s' % (request_url)
+        user_media = requests.get(request_url).json()
+
+        if user_media['meta']['code'] == 200:
+            if len(user_media['data']):
+                image_name = user_media['data'][0]['id'] + '.jpeg'
+                image_url = user_media['data'][0]['images']['standard_resolution']['url']
+                model = app.models.get('travel-v1.0')
+                response = model.predict_by_url(url=image_url)
+
+# data fetched through concepts and stored in response
+                for x in response['outputs'][0]['data']['concepts']:
+
+# print name stored in value
+                    print x['name'], x['value']
+
+# if value of x greater than .7
+                    if x['value'] > .7:
+
+# string show the value of x in name
+                        strr = x['name']
+
+# using temp variable to fetch words stored in dictionary
+                        temp = my_dictionary['words']
+                        temp = temp + ' ' + str(strr)
+                        my_dictionary['words'] = temp
+
+# string stored in a dictionary as a words
+                String = my_dictionary['words']
+                print
+                wordcloud = WordCloud(stopwords=STOPWORDS, background_color='white', width=1200, height=1000).generate(
+                    String)
+                plt.imshow(wordcloud)
+                plt.axis('off')
+                plt.show()
+                urllib.urlretrieve(image_url, image_name)
+            else:
+                print "error"
+
+        else:
+            print "error"
+
+
+ def start_bot():
     while True:
         print '\n'
         print "Hey! Welcome all to MyInstaBot!"
@@ -300,7 +379,8 @@ def start_bot():
         print "9.Make a comment on the recent post of a user\n"
         print "10.Get list comment on recent post\n"
         print "11.Delete negative comments from the recent post of a user\n"
-        print "12.Exit"
+        print "12.Show Subtrends of wedding\n"
+        print "13.Exit"
 
         choice=raw_input(colored("Enter you choice: ",'green'))
         if choice=="1":
